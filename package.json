@@ -3,13 +3,15 @@
   "version": "2.0.1",
   "description": "Swagger-UI and API Rest Routing for Open API v3.",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "rm -rf dist/ && tsc && cp -R src/middleware/swagger-ui dist/middleware/swagger-ui"
+    "build": "rm -rf dist/ && tsc && cp -R src/middleware/swagger-ui dist/middleware/swagger-ui",
+    "prepare" : "npm run build"
   },
   "author": {
-    "name": "Hugo Mercado",
-    "email": "hugo.mario.mercado@gmail.com",
-    "url": "https://github.com/HugoMario"
+    "name": "Nitin Khanna",
+    "email": "ni2.khanna@gmail.com",
+    "url": "https://github.com/papiguy"
   },
   "bugs": {
     "url": "https://github.com/bug-hunters/oas3-tools/issues"

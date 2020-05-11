@@ -130,8 +130,13 @@ export class SwaggerRouter {
           res.statusCode = 500;
         }
       } else {
-        debug('  No handler for method: %s', req.method);
-        return send405(req, res, next);
+        if (options.ignoreMissingHandlers !== true) {
+          debug('  No handler for method: %s', req.method);
+          return send405(req, res, next);
+        } else {
+           next();
+           return;
+        }
       }
       if (rErr) {
         debugError(rErr, debug);

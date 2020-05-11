@@ -34,7 +34,8 @@ export class SwaggerUI {
     const staticMiddleware = serveStatic(options.swaggerUiDir, {});
 
     return (req, res, next) => {
-      const path = parseurl(req).pathname;
+      let path = parseurl(req).pathname;
+
       const isApiDocsPath = apiDocsPaths.indexOf(path) > -1 || (path === options.apiDocsPath);
       const isSwaggerUiPath = path === options.swaggerUIPath || path.indexOf(options.swaggerUIPath + '/') === 0;
       var swaggerApiDocsURL;
@@ -92,7 +93,9 @@ export class SwaggerUI {
 
     // Add the Resource Listing or SwaggerObject to the response cache
     this.apiDocsCache[this.options.apiDocsPath] = JSON.stringify(this.definition, null, 2);
-
+    if (this.options.apiDocsPath.charAt(this.options.apiDocsPath.length -1) !== '/') {
+      this.apiDocsCache[this.options.apiDocsPath + '/'] = this.apiDocsCache[this.options.apiDocsPath];
+    }
     this.apiDocsPaths = Object.keys(this.apiDocsCache);
   }
 

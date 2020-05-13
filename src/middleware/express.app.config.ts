@@ -31,29 +31,37 @@ export class ExpressAppConfig {
         const spec = fs.readFileSync(definitionPath, 'utf8');
         const swaggerDoc = jsyaml.safeLoad(spec);
 
+        this.app.use(this.configureLogger(appOptions.logging));
+
+        //Adding support for various body types and parameters
         this.app.use(bodyParser.urlencoded({
             extended: true
         }));
         this.app.use(bodyParser.text());
         this.app.use(bodyParser.json());
-
-        this.app.use(this.configureLogger(appOptions.logging));
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(cookieParser());
+
+        //If cors filters have to be installed do so.
         if (appOptions.app.cors && appOptions.app.cors.use){
             this.app.use(cors());
             this.app.use(appOptions.app.cors.filter, cors())};
-        let swaggerUiOptions = undefined;
-        if ('swaggerUiOptions' in appOptions){
-            swaggerUiOptions = appOptions.swaggerUiOptions;
-        }
 
-        const swaggerUi = new SwaggerUI(swaggerDoc, swaggerUiOptions);
-        if (appOptions.protectDocumentation){
-            appOptions.protectDocumentation(this.app);
+        //We should deploy documentation by default or if requested by the application
+        if (appOptions.deploySwaggerUi) {
+            let swaggerUiOptions = undefined;
+            if ('swaggerUiOptions' in appOptions) {
+                swaggerUiOptions = appOptions.swaggerUiOptions;
+            }
+
+            const swaggerUi = new SwaggerUI(swaggerDoc, swaggerUiOptions);
+            if (appOptions.protectDocumentation) {
+                appOptions.protectDocumentation(this.app);
+            }
+
+            this.app.use(swaggerUi.serveStaticContent());
         }
-        this.app.use(swaggerUi.serveStaticContent());
     }
 
     private isFunction(functionToCheck) {
@@ -68,25 +76,33 @@ export class ExpressAppConfig {
             .then(() => {
                 this.app.use(new SwaggerParameters().checkParameters());
                 this.app.use(new SwaggerRouter().initialize(this.routingOptions));
-                if (this.appOptions != null && this.appOptions.routers != null){
-                    this.appOptions.routers.forEach(router => {
-                        if (this.isFunction(router)){
-                            if (router.length == 0){
-                                this.app.use(router());
+                if (this.appOptions != null && this.appOptions.appDefinedRouters != null){
+                    this.appOptions.appDefinedRouters.forEach(appDefinedRouter => {
+                        if (this.isFunction(appDefinedRouter)){
+                            if (appDefinedRouter.length == 0){
+                                const [route, router] = appDefinedRouter();
+                                this.app.use(route, router);
                             }
                             else {
-                                this.app.use(router);
+                                this.app.use(appDefinedRouter);
                             }
                         }
                     });
                 }
-                this.app.use((err, req, res, next) => {
-                    // format errors
-                    res.status(err.status || 500).json({
-                        message: err.message,
-                        errors: err.errors,
+                if (this.appOptions != null && this.appOptions.errorHandler != null) {
+                    this.app.use(this.appOptions.errorHandler);
+                } else {
+                    this.app.use((err, req, res, next) => {
+                        // format errors
+                        res.status(err.status || 500).json({
+                            message: err.message,
+                            errors: err.errors,
+                        });
                     });
-                });
+                }
+                if (this.appOptions != null && this.appOptions.catchAllHandler != null){
+                    this.app.use(this.appOptions.catchAllHandler);
+                }
             });
     }
 

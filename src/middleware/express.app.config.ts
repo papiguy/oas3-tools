@@ -18,11 +18,12 @@ export class ExpressAppConfig {
     private definitionPath: string;
     private routingOptions : any;
     private appOptions : any;
+    private oasValidatorOptions : any;
     constructor(definitionPath: string, appOptions) {
         this.definitionPath = definitionPath;
         this.routingOptions = appOptions.routing;
         this.appOptions = appOptions.app;
-
+        this.oasValidatorOptions = appOptions.oasValidatorOptions;
         this.app = express();
         if (appOptions.app.preInitFn != null){
             appOptions.app.preInitFn(this.app);
@@ -69,9 +70,12 @@ export class ExpressAppConfig {
     }
 
     public addValidator() {
-        new OpenApiValidator({
-            apiSpec: this.definitionPath,
-        })
+
+        let defaultValidatorOptions = {
+            apiSpec: this.definitionPath
+        };
+        let options = {... defaultValidatorOptions, ... this.oasValidatorOptions};
+        new OpenApiValidator(options)
             .install(this.app)
             .then(() => {
                 this.app.use(new SwaggerParameters().checkParameters());

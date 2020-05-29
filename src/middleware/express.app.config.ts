@@ -4,28 +4,29 @@ import * as express from 'express';
 import * as path from 'path';
 import cookieParser = require('cookie-parser');
 import bodyParser = require('body-parser');
-import  { SwaggerUI } from './swagger.ui';
-import  { SwaggerRouter } from './swagger.router';
-import  { SwaggerParameters } from './swagger.parameters';
+import {SwaggerUI} from './swagger.ui';
+import {SwaggerRouter} from './swagger.router';
+import {SwaggerParameters} from './swagger.parameters';
 import * as logger from 'morgan';
 import * as fs from 'fs';
 import * as jsyaml from 'js-yaml';
-import { OpenApiValidator } from 'express-openapi-validator';
+import {OpenApiValidator} from 'express-openapi-validator';
 import cors = require('cors');
 
 export class ExpressAppConfig {
     private app: express.Application;
     private definitionPath: string;
-    private routingOptions : any;
-    private appOptions : any;
-    private oasValidatorOptions : any;
+    private routingOptions: any;
+    private appOptions: any;
+    private oasValidatorOptions: any;
+
     constructor(definitionPath: string, appOptions) {
         this.definitionPath = definitionPath;
         this.routingOptions = appOptions.routing;
         this.appOptions = appOptions.app;
         this.oasValidatorOptions = appOptions.oasValidatorOptions;
         this.app = express();
-        if (appOptions.app.preInitFn != null){
+        if (appOptions.app.preInitFn != null) {
             appOptions.app.preInitFn(this.app);
         }
 
@@ -41,13 +42,30 @@ export class ExpressAppConfig {
         this.app.use(bodyParser.text());
         this.app.use(bodyParser.json());
         this.app.use(express.json());
-        this.app.use(express.urlencoded({ extended: false }));
+        this.app.use(express.urlencoded({extended: false}));
         this.app.use(cookieParser());
 
         //If cors filters have to be installed do so.
-        if (appOptions.app.cors && appOptions.app.cors.use){
-            this.app.use(cors());
-            this.app.use(appOptions.app.cors.filter, cors())};
+        if (appOptions.app.cors && appOptions.app.cors.use) {
+            if (appOptions.app.cors.filter === undefined) {
+                this.app.use(cors());
+            } else {
+                this.app.use(cors({
+                    origin: function (origin, callback) {
+                        // allow requests with no origin
+                        // (like mobile apps or curl requests)
+                        if (!origin) return callback(null, true);
+                        if (appOptions.app.cors.filter.indexOf(origin) === -1) {
+                            var msg = 'The CORS policy for this site does not ' +
+                                'allow access from the specified Origin.';
+                            return callback(new Error(msg), false);
+                        }
+                        return callback(null, true);
+                    }
+                }));
+            }
+
+        }
 
         //We should deploy documentation by default or if requested by the application
         if (appOptions.deploySwaggerUi) {
@@ -74,20 +92,19 @@ export class ExpressAppConfig {
         let defaultValidatorOptions = {
             apiSpec: this.definitionPath
         };
-        let options = {... defaultValidatorOptions, ... this.oasValidatorOptions};
+        let options = {...defaultValidatorOptions, ...this.oasValidatorOptions};
         new OpenApiValidator(options)
             .install(this.app)
             .then(() => {
                 this.app.use(new SwaggerParameters().checkParameters());
                 this.app.use(new SwaggerRouter().initialize(this.routingOptions));
-                if (this.appOptions != null && this.appOptions.appDefinedRouters != null){
+                if (this.appOptions != null && this.appOptions.appDefinedRouters != null) {
                     this.appOptions.appDefinedRouters.forEach(appDefinedRouter => {
-                        if (this.isFunction(appDefinedRouter)){
-                            if (appDefinedRouter.length == 0){
+                        if (this.isFunction(appDefinedRouter)) {
+                            if (appDefinedRouter.length == 0) {
                                 const [route, router] = appDefinedRouter();
                                 this.app.use(route, router);
-                            }
-                            else {
+                            } else {
                                 this.app.use(appDefinedRouter);
                             }
                         }
@@ -104,13 +121,13 @@ export class ExpressAppConfig {
                         });
                     });
                 }
-                if (this.appOptions != null && this.appOptions.catchAllHandler != null){
+                if (this.appOptions != null && this.appOptions.catchAllHandler != null) {
                     this.app.use(this.appOptions.catchAllHandler);
                 }
             });
     }
 
-    public configureLogger(loggerOptions){
+    public configureLogger(loggerOptions) {
         let format = 'dev';
         let options: {} = {};
         if (loggerOptions !== undefined) {

@@ -1,26 +1,28 @@
 {
   "name": "oas3-tools",
   "version": "2.0.1",
-  "description": "Swagger-UI and API Rest Routing for Open API v3.",
+  "description": "Swagger-UI and API Rest Routing for Open API v3. Derived from oas3-tools (https://github.com/bug-hunters/oas3-tools).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "prepublish": "npm run build",
     "build": "rm -rf dist/ && tsc && cp -R src/middleware/swagger-ui dist/middleware/swagger-ui",
-    "prepare" : "npm run build"
+    "prepare": "npm run build",
+    "watch": "tsc --watch"
   },
   "author": {
-    "name": "Nitin Khanna",
+    "name": "Nitin Khanna, ",
     "email": "ni2.khanna@gmail.com",
     "url": "https://github.com/papiguy"
   },
   "bugs": {
-    "url": "https://github.com/bug-hunters/oas3-tools/issues"
+    "url": "https://github.com/papiguy/oas3-tools/issues"
   },
-  "homepage": "https://github.com/bug-hunters/oas3-tools",
+  "homepage": "https://github.com/papiguy/oas3-tools/issues",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git@github.com:bug-hunters/oas3-tools.git"
+    "url": "git@github.com:papiguy/oas3-tools.git"
   },
   "keywords": [
     "api",
@@ -39,6 +41,7 @@
     "schemas"
   ],
   "dependencies": {
+    "@types/multer": "^1.4.3",
     "async": "^2.6.3",
     "body-parser": "1.19.0",
     "cookie-parser": "^1.4.4",

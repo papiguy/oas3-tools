@@ -27,7 +27,7 @@
 import { each } from 'lodash';
 
 export function debugError(err, debug) {
-  var reason = err.message.replace(/^.*validation failed: /, '');
+  let reason = err.message.replace(/^.*validation failed: /, '');
 
   reason = reason.charAt(0).toUpperCase() + reason.substring(1);
 

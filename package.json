@@ -36,8 +36,8 @@
     "LICENSE",
     "lib",
     "src/middleware",
-    "dist/middleware",
-    "schemas"
+    "schemas",
+    "tsconfig.json"
   ],
   "dependencies": {
     "@types/multer": "^1.4.4",

@@ -1,6 +1,6 @@
 {
-  "name": "oas3-tools",
-  "version": "2.0.4",
+  "name": "@ni2khanna/oas3-tools",
+  "version": "2.0.5",
   "description": "Swagger-UI and API Rest Routing for Open API v3. Derived from oas3-tools (https://github.com/bug-hunters/oas3-tools).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,11 +9,7 @@
     "prepare": "npm run build",
     "watch": "tsc --watch"
   },
-  "author": {
-    "name": "Nitin Khanna, ",
-    "email": "ni2.khanna@gmail.com",
-    "url": "https://github.com/papiguy"
-  },
+  "author": "Nitin Khanna, <ni2.khanna@gmail.com> (https://github.com/papiguy)",
   "bugs": {
     "url": "https://github.com/papiguy/oas3-tools/issues"
   },
@@ -21,7 +17,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git@github.com:papiguy/oas3-tools.git"
+    "url": "git+ssh://git@github.com/papiguy/oas3-tools.git"
   },
   "keywords": [
     "api",
@@ -36,6 +32,8 @@
     "LICENSE",
     "lib",
     "src",
+    "dist",
+    "dist/middleware",
     "src/middleware",
     "schemas",
     "tsconfig.json"
@@ -74,5 +72,8 @@
     "ts-node": "^9.0.0",
     "typescript": "^4.0.3",
     "webpack": "^5.2.0"
+  },
+  "directories": {
+    "example": "examples"
   }
 }

@@ -7,7 +7,7 @@ import {SwaggerParameters} from './swagger.parameters';
 import * as logger from 'morgan';
 import * as fs from 'fs';
 import * as jsyaml from 'js-yaml';
-import {middleware} from 'express-openapi-validator';
+import {OpenApiValidator} from 'express-openapi-validator';
 import cookieParser = require('cookie-parser');
 import bodyParser = require('body-parser');
 import cors = require('cors');
@@ -92,36 +92,39 @@ export class ExpressAppConfig {
             apiSpec: this.definitionPath
         };
         let options = {...defaultValidatorOptions, ...this.oasValidatorOptions};
-        this.app.use(middleware(options))
-
-        this.app.use(new SwaggerParameters().checkParameters());
-        this.app.use(new SwaggerRouter().initialize(this.routingOptions));
-        if (this.appOptions != null && this.appOptions.appDefinedRouters != null) {
-            this.appOptions.appDefinedRouters.forEach(appDefinedRouter => {
-                if (this.isFunction(appDefinedRouter)) {
-                    if (appDefinedRouter.length == 0) {
-                        const [route, router] = appDefinedRouter(this.app);
-                        this.app.use(route, router);
-                    } else {
-                        this.app.use(appDefinedRouter);
-                    }
+        new OpenApiValidator(options)
+            .install(this.app)
+            .then(() => {
+                this.app.use(new SwaggerParameters().checkParameters());
+                this.app.use(new SwaggerRouter().initialize(this.routingOptions));
+                if (this.appOptions != null && this.appOptions.appDefinedRouters != null) {
+                    this.appOptions.appDefinedRouters.forEach(appDefinedRouter => {
+                        if (this.isFunction(appDefinedRouter)) {
+                            if (appDefinedRouter.length == 0) {
+                                const [route, router] = appDefinedRouter();
+                                this.app.use(route, router);
+                            } else {
+                                this.app.use(appDefinedRouter);
+                            }
+                        }
+                    });
+                }
+                if (this.appOptions != null && this.appOptions.errorHandler != null) {
+                    this.app.use(this.appOptions.errorHandler);
+                } else {
+                    this.app.use((err, req, res, next) => {
+                        // format errors
+                        res.status(err.status || 500).json({
+                            message: err.message,
+                            errors: err.errors,
+                        });
+                    });
+                }
+                if (this.appOptions != null && this.appOptions.catchAllHandler != null) {
+                    this.app.use(this.appOptions.catchAllHandler);
                 }
             });
-        }
-        if (this.appOptions != null && this.appOptions.errorHandler != null) {
-            this.app.use(this.appOptions.errorHandler);
-        } else {
-            this.app.use((err, req, res, next) => {
-                // format errors
-                res.status(err.status || 500).json({
-                    message: err.message,
-                    errors: err.errors,
-                });
-            });
-        }
-        if (this.appOptions != null && this.appOptions.catchAllHandler != null) {
-            this.app.use(this.appOptions.catchAllHandler);
-        }
+
 
     }
 

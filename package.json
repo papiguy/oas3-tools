@@ -1,6 +1,6 @@
 {
   "name": "oas3-tools",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Swagger-UI and API Rest Routing for Open API v3. Derived from oas3-tools (https://github.com/bug-hunters/oas3-tools).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -49,7 +49,7 @@
     "eslint": "^7.12.0",
     "eslint-plugin-react-hooks": "^4.2.0",
     "express": "^4.17.1",
-    "express-openapi-validator": "^4.3.0",
+    "express-openapi-validator": "^3.6.7",
     "js-yaml": "^3.14.0",
     "lodash": "^4.17.20",
     "morgan": "^1.10.0",

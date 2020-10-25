@@ -35,6 +35,7 @@
     "index.js",
     "LICENSE",
     "lib",
+    "src",
     "src/middleware",
     "schemas",
     "tsconfig.json"

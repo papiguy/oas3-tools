@@ -2,7 +2,7 @@
 
 import {defaults, each, isArray, isFunction, isPlainObject, isUndefined} from 'lodash';
 import * as fs from 'fs';
-import { debugError } from "./helpers";
+import { debugError, removeDashElementToCamelCase } from "./helpers";
 import * as path from 'path';
 import Debug from "debug";
 const debug = Debug("oas3-tools:routing");
@@ -85,9 +85,11 @@ export class SwaggerRouter {
 
     const getHandlerName = (req) => {
       if (req.openapi.schema['x-swagger-router-controller']) {
-        return req.openapi.schema['x-swagger-router-controller'] + '_' + (req.openapi.schema.operationId ? req.openapi.schema.operationId : req.method.toLowerCase());
+        let operationId = req.openapi.schema.operationId ? req.openapi.schema.operationId : req.method.toLowerCase();
+        operationId = removeDashElementToCamelCase(operationId);
+        return req.openapi.schema['x-swagger-router-controller'] + '_' + operationId;
       } else {
-        return req.openapi.schema.operationId;
+        return removeDashElementToCamelCase(req.openapi.schema.operationId);
       }
     };
 

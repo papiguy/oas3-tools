@@ -12,7 +12,7 @@ export class SwaggerParameters {
         };
 
         return (req, res, next) => {
-            if (!req.openapi || !req.openapi.schema || !req.openapi.schema.parameters) {
+            if (!req.openapi || !req.openapi.schema) {
                 next();
                 return;
             }
@@ -36,7 +36,7 @@ export class SwaggerParameters {
                 });
             }
 
-            const parameters = req.openapi.schema.parameters;
+            const parameters = req.openapi.schema.parameters || [];
             for (let i = 0; i < parameters.length; i++) {
                 const parameter = parameters[i];
                 if (parameter.in === 'query') {

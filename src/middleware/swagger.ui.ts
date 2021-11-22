@@ -34,7 +34,7 @@ export class SwaggerUI {
     const staticMiddleware = serveStatic(options.swaggerUiDir, {});
 
     return (req, res, next) => {
-      let path = parseurl(req).pathname;
+      const path = parseurl(req).pathname;
 
       const isApiDocsPath = apiDocsPaths.indexOf(path) > -1 || (path === options.apiDocsPath);
       const isSwaggerUiPath = path === options.swaggerUIPath || path.indexOf(options.swaggerUIPath + '/') === 0;

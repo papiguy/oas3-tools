@@ -8,6 +8,7 @@ var serverPort = 8080;
 
 // swaggerRouter configuration
 var options = {
+    deploySwaggerUi : true,
     routing: {
         controllers: path.join(__dirname, './controllers')
     },

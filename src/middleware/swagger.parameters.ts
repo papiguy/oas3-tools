@@ -37,8 +37,7 @@ export class SwaggerParameters {
             }
 
             const parameters = req.openapi.schema.parameters || [];
-            for (let i = 0; i < parameters.length; i++) {
-                const parameter = parameters[i];
+            for (const parameter of parameters) {
                 if (parameter.in === 'query') {
                     queryParams.push(req.query[parameter.name]);
                 } else if (parameter.in === 'cookie') {

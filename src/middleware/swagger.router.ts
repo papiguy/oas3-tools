@@ -55,7 +55,7 @@ export class SwaggerRouter {
   }
 
   initialize(options) {
-    var handlerCache = {};
+    let handlerCache = {};
 
     debug('Initializing swagger-router middleware');
 

@@ -9,62 +9,25 @@ import * as fs from 'fs';
 import * as jsyaml from 'js-yaml';
 import * as OpenApiValidator from 'express-openapi-validator';
 import cookieParser = require('cookie-parser');
-import bodyParser = require('body-parser');
 import cors = require('cors');
+import {CorsOptions, ExpressOptions, RoutingOptions, ValidatingExpressOptions} from "./validating.express.options";
 
 export class ExpressAppConfig {
-    private app: express.Application;
-    private definitionPath: string;
-    private routingOptions: any;
-    private appOptions: any;
-    private oasValidatorOptions: any;
+    private readonly app: express.Application;
+    private readonly definitionPath: string;
+    private readonly routingOptions: RoutingOptions;
+    private readonly appOptions: ExpressOptions;
+    private readonly oasValidatorOptions: any;
 
-    constructor(definitionPath: string, appOptions) {
+    constructor(definitionPath: string, appOptions: ValidatingExpressOptions) {
         this.definitionPath = definitionPath;
         this.routingOptions = appOptions.routing;
-        this.appOptions = appOptions.app;
+        this.appOptions = appOptions.expressOptions;
         this.oasValidatorOptions = appOptions.oasValidatorOptions;
-        this.app = express();
-        if (appOptions.app && appOptions.app.preInitFn) {
-            appOptions.app.preInitFn(this.app);
-        }
 
-        const spec = fs.readFileSync(definitionPath, 'utf8');
-        const swaggerDoc = jsyaml.load(spec);
-
-        this.app.use(this.configureLogger(appOptions.logging));
-
-        //Adding support for various body types and parameters
-        this.app.use(bodyParser.urlencoded({
-            extended: true
-        }));
-        this.app.use(bodyParser.text());
-        this.app.use(bodyParser.json());
-        this.app.use(express.json());
-        this.app.use(express.urlencoded({extended: false}));
-        this.app.use(cookieParser());
-
-        //If cors filters have to be installed do so.
-        if (appOptions.app && appOptions.app.cors && appOptions.app.cors.use) {
-            if (appOptions.app.cors.filter === undefined) {
-                this.app.use(cors());
-            } else {
-                this.app.use(cors({
-                    origin: function (origin, callback) {
-                        // allow requests with no origin
-                        // (like mobile apps or curl requests)
-                        if (!origin) return callback(null, true);
-                        if (appOptions.app.cors.filter.indexOf(origin) === -1) {
-                            var msg = 'The CORS policy for this site does not ' +
-                                'allow access from the specified Origin.';
-                            return callback(new Error(msg), false);
-                        }
-                        return callback(null, true);
-                    }
-                }));
-            }
-
-        }
+        this.app = ExpressAppConfig.setupExpress(appOptions.expressOptions);
+        this.configureLogger(appOptions.loggerOptions);
+        this.configureCors(appOptions.expressOptions.cors);
 
         //We should deploy documentation by default or if requested by the application
         if (appOptions.deploySwaggerUi) {
@@ -72,6 +35,9 @@ export class ExpressAppConfig {
             if ('swaggerUiOptions' in appOptions) {
                 swaggerUiOptions = appOptions.swaggerUiOptions;
             }
+
+            const spec = fs.readFileSync(definitionPath, 'utf8');
+            const swaggerDoc = jsyaml.load(spec);
 
             const swaggerUi = new SwaggerUI(swaggerDoc, swaggerUiOptions);
             if (appOptions.protectDocumentation) {
@@ -82,8 +48,47 @@ export class ExpressAppConfig {
         }
     }
 
-    private isFunction(functionToCheck) {
+    private static isFunction(functionToCheck) {
         return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
+    }
+
+    private configureCors(corsOptions: CorsOptions) {
+        //If cors filters have to be installed do so.
+        if (!corsOptions?.use) {
+            return;
+        }
+        if (!corsOptions?.filter) {
+            this.app.use(cors());
+            return;
+        }
+        this.app.use(cors({
+            origin: function (origin, callback) {
+                // allow requests with no origin
+                // (like mobile apps or curl requests)
+                if (!origin) return callback(null, true);
+                if (corsOptions.filter.indexOf(origin) === -1) {
+                    var msg = 'The CORS policy for this site does not ' +
+                        'allow access from the specified Origin.';
+                    return callback(new Error(msg), false);
+                }
+                return callback(null, true);
+            }
+        }));
+    }
+
+    private static setupExpress(expressOptions: ExpressOptions) {
+        const app = express();
+        if (expressOptions && expressOptions.preInitFn) {
+            expressOptions.preInitFn(app);
+        }
+
+        //Adding support for various body types and parameters
+        app.use(express.text())
+        app.use(express.json({limit: '2MB'}));
+        app.use(express.urlencoded({extended: true, limit: '2MB'}));
+        app.use(cookieParser());
+
+        return app;
     }
 
     public addValidator() {
@@ -94,22 +99,24 @@ export class ExpressAppConfig {
         };
         let options = {...defaultValidatorOptions, ...this.oasValidatorOptions};
         const middleware = OpenApiValidator.middleware(options);
-        this.app.use(middleware );
+        this.app.use(middleware);
         this.app.use(new SwaggerParameters().checkParameters());
         this.app.use(new SwaggerRouter().initialize(this.routingOptions));
         if (this.appOptions != null && this.appOptions.appDefinedRouters != null) {
             this.appOptions.appDefinedRouters.forEach(appDefinedRouter => {
-                if (this.isFunction(appDefinedRouter)) {
+                if (ExpressAppConfig.isFunction(appDefinedRouter)) {
                     if (appDefinedRouter.length == 0) {
                         const [route, router] = appDefinedRouter();
                         this.app.use(route, router);
                     } else {
+                        // @ts-ignore
                         this.app.use(appDefinedRouter);
                     }
                 }
             });
         }
         if (this.appOptions != null && this.appOptions.errorHandler != null) {
+            // @ts-ignore
             this.app.use(this.appOptions.errorHandler);
         } else {
             this.app.use((err, req, res, next) => {
@@ -121,34 +128,23 @@ export class ExpressAppConfig {
             });
         }
         if (this.appOptions != null && this.appOptions.catchAllHandler != null) {
+            // @ts-ignore
             this.app.use(this.appOptions.catchAllHandler);
         }
-
-
-
     }
 
     public configureLogger(loggerOptions) {
         let format = 'dev';
         let options: {} = {};
-        if (loggerOptions !== undefined) {
-
-
-            if (loggerOptions.format != undefined
-                && typeof loggerOptions.format === 'string') {
-                format = loggerOptions.format;
-            }
-
-
-            if (loggerOptions.errorLimit != undefined
-                && (typeof loggerOptions.errorLimit === 'string' || typeof loggerOptions.errorLimit === 'number')) {
-                options['skip'] = function (req, res) {
-                    return res.statusCode < parseInt(loggerOptions.errorLimit);
-                };
-            }
+        if (loggerOptions?.format !== undefined) {
+            format = loggerOptions.format;
         }
-
-        return logger(format, options);
+        if (loggerOptions?.dontReportStatusCodesBelow != undefined) {
+            options['skip'] = function (req, res) {
+                return res.statusCode < parseInt(loggerOptions.dontReportStatusCodesBelow);
+            };
+        }
+        this.app.use(logger(format, options));
     }
 
     public getApp(): express.Application {

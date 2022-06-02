@@ -14,11 +14,16 @@ var options = {
     },
     logging: {
         format: 'combined',
-        errorLimit: 400
+        dontReportStatusCodesBelow: 400
+    },
+    swaggerUiOptions: {
+        apiDocsPath: '/api/rest',
+        swaggerUIPath: '/api/rest-spec',
+        swaggerUiDir: undefined
     }
 };
 
-var expressAppConfig = oas3Tools.expressAppConfig(path.join(__dirname, 'api/petstore.yaml'), options);
+var expressAppConfig = oas3Tools.expressAppBuilder(path.join(__dirname, 'api/petstore.yaml'),oas3Tools.optionsFromObject(options));
 expressAppConfig.addValidator();
 var app = expressAppConfig.getApp();
 

@@ -45,14 +45,17 @@ export class RoutingOptions {
     public readonly controllers: object | string;
     //if true stubs will be used. false by default
     public readonly useStubs: boolean;
+    public readonly ignoreMissingHandlers: boolean;
 
     constructor (options : any){
         options  = defaults(options, {
             controllers: {},
-            useStubs: false
+            useStubs: false,
+            ignoreMissingHandlers: false
         });
         this.controllers = options.controllers;
         this.useStubs = options.useStubs;
+        this.ignoreMissingHandlers = options.ignoreMissingHandlers
     }
 }
 

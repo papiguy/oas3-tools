@@ -7,7 +7,8 @@
   "scripts": {
     "build": "rm -rf dist/ && tsc && cp -R src/middleware/swagger-ui dist/middleware/swagger-ui",
     "prepare": "yarn run build",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test": "snyk test"
   },
   "author": "Nitin Khanna, <ni2.khanna@gmail.com> (https://github.com/papiguy)",
   "bugs": {
@@ -60,6 +61,7 @@
     "serve-static": "1.15.0"
   },
   "devDependencies": {
+    "snyk": "^1.972.0",
     "typescript": "4.7.2",
     "webpack": "5.72.1"
   },
